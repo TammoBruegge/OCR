@@ -2,46 +2,43 @@ program main
     
     implicit none
     
-    real(8), allocatable :: D(:,:), x0(:), y0(:), DiffMat(:,:)
-    real(8) :: a,b,l,delta,g,m, maxT, deltaT, kappa, h, partitions1
-    integer :: i,j,t0, steps, partitions
+    real(8), allocatable :: DiffMat(:,:), values_pred(:), values_prey(:)
+    real(8) :: a, b, l, d, g, m, maxT, deltaT, kappa, h, partitions1
+    integer :: i, j, t0, steps, partitions
 
-    real(8), allocatable :: values_pred(:), values_prey(:)
-
-    a = 0.6 
-    b = 0.03 
-    l = 0
-    delta = 0.02 !Reproduktionsrate der Räuber
+    a = 0.6 !Reproduktionsrate der Beute
+    b = 0.03 !Fressrate der Räuber im Bezug auf die Beute
+    l = 0 !negative soziale Interaktion der Beute
+    d = 0.02 !Reproduktionsrate der Räuber im Bezug auf Beute
     g = 0.8 ! Sterberate der Räuber
-    m = 0
-
-    kappa = 0.001
+    m = 0 !negative soziale Interaktion der Räuber
 
 
+    kappa = 0.001 !Diffusionskonstante
 
+
+
+    t0 = 0
     maxT = 45
     steps = 450000
+    deltaT = (maxT - t0) / steps
 
     partitions = 5 !Anzahl Räumliche Dimensionen
-    partitions1 = partitions
-    t0 = 0
+    partitions1 = partitions !Wir brauchen partitions1, weil partitions ein Integer sein muss aber bei der Berechnung von h
+                             !wir ein Real benötigen, da sonst Rundungsfehler enstehen
 
-    deltaT = maxT / steps
-    h = 1 / partitions1
+    h = 1 / partitions1  !Da wir das Intervall von 0 bis 1 Räumlich partitionieren
 
-    !Diffusions Matrix
+    !Speicher allozieren
     allocate(DiffMat(partitions,partitions))
-    allocate(D(partitions,partitions))
-
-    allocate(x0(partitions))
-    allocate(y0(partitions))
 
     allocate(values_prey(partitions))
     allocate(values_pred(partitions))
 
 
-    do i = 1, partitions
-        do j = 1, partitions
+    !Diffusionsmatrix erstellen
+    do j = 1, partitions
+        do i = 1, partitions
             if((i == j) .and. (i == 1 .or. i == partitions)) then
                 DiffMat(i,j) = -1
             else if (i == j) then
@@ -54,31 +51,17 @@ program main
         enddo
     enddo
 
-    D = (kappa / (h*h)) * DiffMat
-
-  !  write(*,*) D(1,:)
-  !  write(*,*) D(2,:)
-  !  write(*,*) D(3,:)
-  !  write(*,*) D(4,:)
-  !  write(*,*) D(5,:)
+    DiffMat = (kappa / (h*h)) * DiffMat !skalierte Diffusionsmatrix
 
 
+    !Vektoren mit den Anfangsvektoren
+    values_prey = (/100, 90, 110, 80, 103/)
+    values_pred = (/20, 10, 15, 25, 22/)
 
 
-
-   ! x0 = 100 !preys
-   ! y0 = 20 ! predators
-
-    x0 = (/100, 90, 110, 80, 103/)
-    y0 = (/20, 10, 15, 25, 22/)
-
-    
-    values_prey = x0
-    values_pred = y0
-
-
-    do i = 2, steps
-        call euler_at_one_point(values_prey, values_pred, deltaT)
+    !timeloop
+    do i = 2, steps + 1
+        call euler(values_prey, values_pred, deltaT)
     enddo
 
     open(unit=12, file='values_prey.txt', status='replace', action='write')
@@ -91,28 +74,24 @@ program main
     
     deallocate(values_prey)
     deallocate(values_pred)
-    deallocate(D)
     deallocate(DiffMat)
-    deallocate(x0)
-    deallocate(y0)
 
 
     
     contains
-    subroutine euler_at_one_point(values_prey, values_pred,deltaT)
-        real(8), intent(INOUT) :: values_prey(:), values_pred(:) !Beidseitiger Informationsfluss, Aufrufende Programm Einheit <->  Funktion
-        real(8), intent(IN) :: deltaT!Wert wird in der Funktion nicht verändert und es findet kein Rückfluss
-        !der Informationen in die aufrundende Programm Einheit statt
-        real(8), allocatable :: temp_array(:)
+    subroutine euler(values_prey, values_pred,deltaT)
+        real(8), intent(INOUT) :: values_prey(:), values_pred(:) !Beidseitiger Informationsfluss, Aufrufende Programmeinheit <->  Funktion
+        real(8), intent(IN) :: deltaT  !Wert wird in der Funktion nicht verändert und es findet kein Rückfluss
+                                       !der Informationen in die aufrufende Programmeinheit statt
+        real(8), allocatable :: temp_array(:)  !Temp_array benutzen wir, damit die Änderung beider Bestände gleichzeitig in Kraft treten
+                                               !und sich nicht gegenseitig beeinflussen
         allocate(temp_array(steps))
 
-        temp_array = values_prey
+        temp_array = values_prey 
 
-        values_prey = values_prey + deltaT * (MATMUL(D, values_prey) + values_prey * a - values_prey * b * &
-        & values_pred - values_prey * l * values_prey)
+        values_prey = values_prey + deltaT * (MATMUL(DiffMat, values_prey) + values_prey * (a - b * values_pred - l * values_prey))
 
-        values_pred = values_pred + deltaT * (MATMUL(D, values_pred) + values_pred * delta *  temp_array - values_pred * g - &
-        & values_pred * m * values_pred)
+        values_pred = values_pred + deltaT * (MATMUL(DiffMat, values_pred) + values_pred * (d * temp_array - g - m * values_pred))
 
         deallocate(temp_array)
     end subroutine
