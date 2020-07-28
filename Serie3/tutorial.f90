@@ -16,8 +16,8 @@ program tutorial
     result = 0
 
     call cpu_time(t1)
-    do j=1, n
-        do i=1, n
+    do i=1, n
+        do j=1, n
             result(i) = result(i) + (A(i,j) * x(j))
         enddo
     enddo
