@@ -3,5 +3,7 @@
 # delta_t ist die Größe eines Zeitschrittes
 # y_k ist y(tk)
 # parameters ist eine Liste von Parametern, welche f außer y_k noch benötigt
+
+
 def euler(f, delta_t, y_k, parameters):
     return y_k + delta_t * f(y_k, parameters)
