@@ -3,7 +3,7 @@ program main
     implicit none
     
     real(8), allocatable :: DiffMat(:,:), values_pred(:), values_prey(:)
-    real(8) :: a, b, l, d, g, m, maxT, deltaT, kappa, h, partitions1
+    real(8) :: a, b, l, d, g, m, maxT, deltaT, kappa, h
     integer :: i, j, t0, steps, partitions
 
     a = 0.6 !Reproduktionsrate der Beute
@@ -24,10 +24,8 @@ program main
     deltaT = (maxT - t0) / steps
 
     partitions = 5 !Anzahl Räumliche Dimensionen
-    partitions1 = partitions !Wir brauchen partitions1, weil partitions ein Integer sein muss aber bei der Berechnung von h
-                             !wir ein Real benötigen, da sonst Rundungsfehler enstehen
 
-    h = 1 / partitions1  !Da wir das Intervall von 0 bis 1 Räumlich partitionieren
+    h = 1 / dble(partitions)  !Da wir das Intervall von 0 bis 1 Räumlich partitionieren
 
     !Speicher allozieren
     allocate(DiffMat(partitions,partitions))
@@ -65,8 +63,8 @@ program main
     enddo
 
     open(unit=12, file='values_prey.txt', status='replace', action='write')
-    write(12, '(E20.6)') values_prey
-    close(unit=12)
+    write(12, '(E20.6)') values_prey !E steht für Real Numbers(Exponent Notation), 
+    close(unit=12)                   !!die 20 für die Feldbreite und die 6 für die Anzahl der Nachkommastellen (fractional Part)
 
     open(unit=13, file='values_pred.txt', status='replace', action='write')
     write(13, '(E20.6)') values_pred
@@ -79,7 +77,7 @@ program main
 
     
     contains
-    subroutine euler(values_prey, values_pred,deltaT)
+    subroutine euler(values_prey, values_pred, deltaT)
         real(8), intent(INOUT) :: values_prey(:), values_pred(:) !Beidseitiger Informationsfluss, Aufrufende Programmeinheit <->  Funktion
         real(8), intent(IN) :: deltaT  !Wert wird in der Funktion nicht verändert und es findet kein Rückfluss
                                        !der Informationen in die aufrufende Programmeinheit statt
