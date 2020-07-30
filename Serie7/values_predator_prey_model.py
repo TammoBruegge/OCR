@@ -9,10 +9,10 @@ m = 1.0
 
 e = 10**-4
 
-kappa = 0.1 # 14043 Schritte normale Euler und 14044 Schritte improved Euler
+#kappa = 0.1 # 14043 Schritte normale Euler und 14044 Schritte improved Euler
 #kappa = 0.01 # 14422 Schritte normale Euler und 14423 Schritte improved Euler
 #kappa = 0.001 # 16026 Schritte normale Euler und 16028 Schritte improved Euler
-# kappa = 0.0001 # 18184 Schritte normale Euler und 18185 Schritte improved Euler
+kappa = 0.0001 # 18184 Schritte normale Euler und 18185 Schritte improved Euler
 
 h = 1 / boxes
 
