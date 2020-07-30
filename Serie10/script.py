@@ -2,50 +2,48 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np 
 
-alphaArray = []
-values_prey = []
-preyArray = []
+alphaArray = [] # Das Array ist zum Speichern der Alpha Werte
+preyArray = [] # Das Array zum Speichern der Prey Bestände zum letzten Zeitpunkt
 
-tempArray = []
+N = 100
 
-for i in range(0,200):
-    tempArray.append(i / 100.0)
+for i in range(0,2*N): # Wertebereich soll von [0,2]
+    alphaArray.append(i / N) # Teile den Wertebereich von Alpha gleichmäßig in N Punkte auf
 
 
-for j in range(0,len(tempArray),1):
-    alphaArray.append(tempArray[j])
-
+for j in range(0,len(alphaArray),1):
     inlines = []
     outlines = []
+    
+    # namelist Zeilenweise in inlines speichern
     with open('predatorprey.nml') as infile:
         for line in infile:
             inlines.append(line)
 
+    # Alpha Zeile suchen und Wert von Alpha durch Wert alphaArray[j] ersetzen
     for line in inlines:
         if(line[0:5] == 'alpha'):
-            line = 'alpha = ' + str(tempArray[j])+ ' \n'
-        outlines.append(line)
+            line = 'alpha = ' + str(alphaArray[j])+ ' \n'
+        outlines.append(line) 
 
             
+    # Alte Namelist Zeile für Zeile mit Einträgen des Outline Arrays überschreiben
     with open('predatorprey.nml', 'w') as outfile:
         for line in outlines:
             outfile.write(line)
 
 
-    os.system('gfortran -o output predator_prey.f90')
-    os.system('./output')
+    os.system('gfortran -o output predator_prey.f90') # Programm kompilieren
+    os.system('./output') # Programm ausführen
+                                                    
+    my_file = np.loadtxt(fname='outfilePrey.txt') # Outputdatei des predator_prey.f90 Programms wird in Array my_file gespeichert
 
-    np.loadtxt(fname='outfilePrey.txt')
-    my_file = np.loadtxt(fname='outfilePrey.txt')
-
-
-    size = len(my_file)
-    preyArray.append(my_file[size - 1])
+    preyArray.append(my_file[len(my_file) - 1]) # dem preyArray den Bestand zum letzten Zeitpunkt dieser Ausführung hinzufügen
         
 # Graph plotten
 plt.plot(alphaArray, preyArray)
 plt.xlabel('Alpha')
-plt.ylabel('Finaler Prey Bestand')
+plt.ylabel('Finaler Preybestand zum zugehörigen Alpha')
 plt.ticklabel_format(useOffset=False) # Genaueres Anzeigen großes Zahlen
 plt.show()
 
