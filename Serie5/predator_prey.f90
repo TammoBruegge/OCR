@@ -4,17 +4,17 @@ program main
  
 
     
-    real(kind=wp), allocatable :: DiffMat(:,:), values_pred(:), values_prey(:)
-    real(kind=wp) :: alpha, beta, lambda, delta, gamma, mu, T, dt, kappa, h, t0, t1, t2
+    real(kind = wp), allocatable :: DiffMat(:,:), values_pred(:), values_prey(:)
+    real(kind = wp) :: alpha, beta, lambda, delta, gamma, mu, T, dt, kappa, h, t0, t1, t2
     integer :: i, j, steps, N
 
 
-    !namelist Gruppen definieren
+    !namelist-Gruppen definieren
     namelist /model_parameters/ alpha, beta, gamma, delta, lambda, mu
     namelist /spatial_parameters/ kappa, N 
     namelist /time_parameters/ t0, T, dt
 
-    !namelist Datei öffnen
+    !namelist-Datei öffnen
     open(unit = 12, file = 'predatorprey.nml', action = 'read')
 
     !einzelne Gruppen auslesen
@@ -31,10 +31,10 @@ program main
     !manuell so gesetzt
     if(steps < int(2*N*N*kappa*T)) then
         steps = int(4*N*N*kappa*T)
-        dt = (T-t0) / steps !Wenn Steps angepasst werden, müssen wir auch deltaT anpassen, da wir sonst über T hinaus laufen
+        dt = (T-t0) / steps !Wenn Steps angepasst werden, müssen wir auch deltaT anpassen, da wir sonst über T hinaus laufen mit mehr Steps selber Größe
     endif
 
-    h = 1 / dble(N) !Da wir das Intervall von 0 bis 1 Räumlich partitionieren
+    h = 1 / dble(N) !Da wir das Intervall von 0 bis 1 Räumlich partitionieren hat eine Box die Breite h
 
     !Speicher allozieren
     allocate(DiffMat(N,N))
@@ -48,7 +48,7 @@ program main
                 DiffMat(i,j) = -1
             else if (i == j) then
                 DiffMat(i,j) = -2
-            else if(i == j-1 .or. i == j+1) then
+            else if(i == j - 1 .or. i == j + 1) then
                 DiffMat(i,j) = 1
             else
                 DiffMat(i,j) = 0
@@ -63,11 +63,10 @@ program main
     call random_number(values_pred)
 
 
-    !timeloop
+    !Timeloop
     call cpu_time(t1)
     do i = 2, steps + 1
         call euler_at_one_point(values_prey, values_pred, dt)
-        write(*,*) i
     enddo
     call cpu_time(t2)
 
@@ -94,7 +93,7 @@ program main
                                              !der Informationen in die aufrufende Programmeinheit statt
         real(kind=wp), allocatable :: temp_array(:)  !Temp_array benutzen wir, damit die Änderung beider Bestände gleichzeitig in Kraft treten
                                                      !und sich nicht gegenseitig beeinflussen
-        allocate(temp_array(steps))
+        allocate(temp_array(N))
         temp_array = values_prey 
 
         values_prey = values_prey + deltaT * (MATMUL(DiffMat, values_prey) + values_prey * (alpha - beta * values_pred &

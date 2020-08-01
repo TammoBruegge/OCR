@@ -6,8 +6,7 @@ program main
 
     
     real(kind=wp), allocatable :: DiffMat(:,:), values_pred(:), values_prey(:)
-    real(kind=wp) :: alpha, beta, lambda, delta, gamma, mu, T, dt, kappa, h, t0
-    real(4) :: t1, t2
+    real(kind=wp) :: alpha, beta, lambda, delta, gamma, mu, T, dt, kappa, h, t0, t1, t2
     integer :: i, j, steps, N, k
 
     logical :: diff !logical sind .true. oder .false.
@@ -50,7 +49,7 @@ program main
 
 
     !Überprüfung ob wir Diffusion haben wollen oder nicht
-    if(diff .eqv. .true.) then
+    if(diff) then
 
         !Diffusionsmatrix erstellen
         do j = 1, N
@@ -59,7 +58,7 @@ program main
                     DiffMat(i,j) = -1
                 else if (i == j) then
                     DiffMat(i,j) = -2
-                else if(i == j-1 .or. i == j+1) then
+                else if(i == j - 1 .or. i == j + 1) then
                     DiffMat(i,j) = 1
                 else
                     DiffMat(i,j) = 0
@@ -69,23 +68,17 @@ program main
 
         DiffMat = (kappa / (h * h))  * DiffMat !skalierte Diffusionsmatrix
 
-
         call random_number(values_prey) !random_number füllt das Array mit Zufälligen Zahlen zwischen 0 und 1
         call random_number(values_pred)
     
         t1 = omp_get_wtime()
         !timeloop mit verschiedenen Eulervarianten
         do i = 2, steps + 1
-            !call euler_at_one_point_diff_matmul(values_prey, values_pred, dt)       !Laufzeit: 0 Sekunden bei 250 Boxen
-                                                                                    !Laufzeit: 36,5 Sekunden bei 1024 Boxen
-            call euler_at_one_point_diff_matmul_loop(values_prey, values_pred, dt) !Laufzeit: 0 Sekunden bei 250 Boxen (26,5 wenn MatMUL immer neuberechnet wird in Loop)
-                                                                                    !Laufzeit: 38,5 Sekunden bei 1024 Boxen
-            !call euler_at_one_point_diff_selfmade(values_prey, values_pred, dt) !Laufzeit: 1219 Sekunden ca. 20 Min bei 1024 Boxen
-                                                                                 !Laufzeit: 1.5 Sekunden bei 250 Boxen
-            write(*,*) i
+            !call euler_at_one_point_diff_matmul(values_prey, values_pred, dt) !Laufzeit: 30.5 Sekunden bei 1024 Boxen
+            call euler_at_one_point_diff_matmul_loop(values_prey, values_pred, dt) !Laufzeit: 33.5 Sekunden bei 1024 Boxen (281 Sekunden auf VM)
+            !call euler_at_one_point_diff_selfmade(values_prey, values_pred, dt) !Laufzeit: 232 Sekunden bei 1024 Boxen
         enddo
         t2 = omp_get_wtime()
-        
 
         write(*,*) t2-t1
     else
@@ -97,7 +90,6 @@ program main
         !timeloop
         do i = 2, steps + 1
           call euler_at_one_point(values_prey, values_pred, dt) !Laufzeit: 0.5 Sekunden bei 1024 Boxen
-                                                                !Laufzeit: 0 Sekunden bei 250 Boxen
         enddo
         t2 = omp_get_wtime()
 
@@ -139,8 +131,8 @@ program main
         call omp_set_num_threads(8) !hiermit sagen wir, dass wir 8 Threads benutzen wollen
         !$omp parallel private(k)
             !$omp do
-                do k=1,N
-                    do j=1, N
+                do j = 1,N
+                    do k = 1, N
                         result_prey(k) = result_prey(k) + (DiffMat(k,j) * values_prey(j)) !result_prey = D * values_prey
                     enddo
                 enddo
@@ -152,8 +144,8 @@ program main
        call omp_set_num_threads(8) !hiermit sagen wir, dass wir 8 Threads benutzen wollen
         !$omp parallel private(k)
             !$omp do
-                do k=1,N
-                    do j=1, N
+                do j = 1,N
+                    do k = 1, N
                         result_pred(k) = result_pred(k) + (DiffMat(k,j) * values_pred(j)) !result_pred = D * values_pred
                     enddo
                 enddo
@@ -173,7 +165,7 @@ program main
         real(kind=wp), intent(INOUT) :: values_prey(:), values_pred(:) !Beidseitiger Informationsfluss, Aufrufende Programmeinheit <->  Funktion
         real(kind=wp), intent(IN) :: deltaT !Wert wird in der Funktion nicht verändert und es findet kein Rückfluss
                                             !der Informationen in die aufrundende Programmeinheit statt
-        real(kind=wp), allocatable :: temp_array(:) !Temp_array benutzen wir, damit die Änderung beider Bestände gleichzeitig in Kraft treten
+        real(kind=wp), allocatable :: temp_array(:) !temp_array benutzen wir, damit die Änderung beider Bestände gleichzeitig in Kraft treten
                                                     !und sich nicht gegenseitig beeinflussen
         allocate(temp_array(N))
 
@@ -188,8 +180,8 @@ program main
         deallocate(temp_array)
     end subroutine
 
-    !Hier machen wir die Vektor Multiplikation in einer Schleife händisch, also Komponentenweise und nicht über die vordefinierte Fotran Funktion
-    !Aber wir benutzen die MATMUL Funktion, welche uns Fortran bereitstellt
+    !In dieser Subroutine erledigen wir das berechnen der Ableitung elementweise in einer Schleife und nicht durch die von Fortran definierten Funktionen vektorweise
+    !Aber wir benutzen die MATMUL Funktion, welche uns Fortran bereitstellt, um  die Diffusion im Voraus zu bestimmen
     subroutine euler_at_one_point_diff_matmul_loop(values_prey, values_pred,deltaT)
         real(kind=wp), intent(INOUT) :: values_prey(:), values_pred(:) !Beidseitiger Informationsfluss, Aufrufende Programmeinheit <->  Funktion
         real(kind=wp), intent(IN) :: deltaT !Wert wird in der Funktion nicht verändert und es findet kein Rückfluss
@@ -231,11 +223,10 @@ program main
 
         temp_array = values_prey
 
-        values_prey = values_prey + deltaT * (values_prey * alpha - values_prey * beta * &
-        & values_pred - values_prey * lambda * values_prey)
+        values_prey = values_prey + deltaT * values_prey * (alpha -  beta * values_pred - lambda * values_prey)
 
-        values_pred = values_pred + deltaT * (values_pred * delta *  temp_array - values_pred * gamma - &
-        & values_pred * mu * values_pred)
+        values_pred = values_pred + deltaT * values_pred * (delta *  temp_array - gamma - &
+        & mu * values_pred)
 
         deallocate(temp_array)
     end subroutine

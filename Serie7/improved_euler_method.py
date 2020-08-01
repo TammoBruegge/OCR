@@ -7,4 +7,5 @@
 
 
 def euler(f, delta_t, y_k, parameters):
-    return y_k + delta_t * f(y_k + (delta_t / 2) * f(y_k, parameters), parameters)
+    halfstep = y_k + (delta_t / 2) * f(y_k, parameters)
+    return y_k + delta_t * f(halfstep, parameters)

@@ -19,7 +19,7 @@ program predatorPrey
     deltaT = (maxT - t0) / steps
 
 
-    allocate(result_prey(steps + 1))
+    allocate(result_prey(steps + 1)) !Größe steps + 1 (n + 1), da wir Zeitschritt 0 bis einschließlich n plotten wollen (wir starten bei 0 und gehen n mal einen Schritt)
     allocate(result_pred(steps + 1))
     allocate(timeArray(steps + 1))
 
@@ -33,9 +33,9 @@ program predatorPrey
         call euler(result_prey, result_pred, i, deltaT)
     enddo
 
-    open(unit = 20, file = 'outfilePred.txt', status = 'replace', action = 'write')
-    write(20, '(E20.6)') result_pred
-    close(20)
+    open(unit = 20, file = 'outfilePred.txt', status = 'replace', action = 'write') !Unit ist ein eindeutiger Identifier für die Datei
+    write(20, '(E20.6)') result_pred !E steht für Real Numbers(Exponent Notation), 
+    close(20)                        !die 20 für die Feldbreite und die 6 für die Anzahl der Nachkommastellen (fractional Part)
 
     open(unit = 21, file = 'outfilePrey.txt', status = 'replace', action='write')
     write(21, '(E20.6)') result_prey
@@ -56,8 +56,10 @@ program predatorPrey
             real(8), intent(INOUT) :: result_prey(:), result_pred(:) !Beidseitiger Informationsfluss, Aufrufende Programmeinheit <->  Funktion
             real(8), intent(IN) :: deltaT !Wert wird in der Funktion nicht verändert und es findet kein Rückfluss
             integer, intent(IN) :: i      !der Informationen in die aufrufende Programmeinheit statt 
-            result_prey(i) = result_prey(i-1) + deltaT * (result_prey(i-1) * (a-b * result_pred(i-1) - l * result_prey(i-1)))
-            result_pred(i) = result_pred(i-1) + deltaT * (result_pred(i-1) * (d * result_prey(i-1) - g - m * result_pred(i-1)))
+            result_prey(i) = result_prey(i - 1) + deltaT * (result_prey(i - 1) * (a - b * result_pred(i - 1) - l &
+            & * result_prey(i - 1)))
+            result_pred(i) = result_pred(i - 1) + deltaT * (result_pred(i - 1) * (d * result_prey(i - 1) - g - m &
+            & * result_pred(i - 1)))
         end subroutine
 
 

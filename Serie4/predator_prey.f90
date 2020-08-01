@@ -13,23 +13,19 @@ program main
     g = 0.8 ! Sterberate der Räuber
     m = 0 !negative soziale Interaktion der Räuber
 
-
     kappa = 0.001 !Diffusionskonstante
-
-
+    
+    partitions = 100 !Anzahl Räumliche Dimensionen
 
     t0 = 0
-    maxT = 45
-    steps = 450000
+    maxT = 500
+    steps = 4 * partitions * partitions * kappa * maxT
     deltaT = (maxT - t0) / steps
-
-    partitions = 5 !Anzahl Räumliche Dimensionen
 
     h = 1 / dble(partitions)  !Da wir das Intervall von 0 bis 1 Räumlich partitionieren
 
     !Speicher allozieren
     allocate(DiffMat(partitions,partitions))
-
     allocate(values_prey(partitions))
     allocate(values_pred(partitions))
 
@@ -41,7 +37,7 @@ program main
                 DiffMat(i,j) = -1
             else if (i == j) then
                 DiffMat(i,j) = -2
-            else if(i == j-1 .or. i == j+1) then
+            else if(i == j - 1 .or. i == j + 1) then
                 DiffMat(i,j) = 1
             else
                 DiffMat(i,j) = 0
@@ -49,12 +45,21 @@ program main
         enddo
     enddo
 
-    DiffMat = (kappa / (h*h)) * DiffMat !skalierte Diffusionsmatrix
+    DiffMat = (kappa / (h * h)) * DiffMat !skalierte Diffusionsmatrix
 
 
-    !Vektoren mit den Anfangsvektoren
-    values_prey = (/100, 90, 110, 80, 103/)
-    values_pred = (/20, 10, 15, 25, 22/)
+    !Initial values in die Arrays eintragen
+    values_prey = (/100, 90, 110, 80, 103, 100, 90, 110, 80, 103, 100, 90, 110, 80, 103, 100, 90, &
+    & 110, 80, 103, 100, 90, 110, 80, 103, 100, 90, 110, 80, 103, 100, 90, 110, 80, 103, 100, 90, &
+    & 110, 80, 103, 100, 90, 110, 80, 103, 100, 90, 110, 80, 103, 100, 90, 110, 80, 103, &
+    & 100, 90, 110, 80, 103, 100, 90, 110, 80, 103, 100, 90, 110, 80, 103, 100, 90, 110, 80, 103, &
+    & 100, 90, 110, 80, 103, 100, 90, 110, 80, 103, 100, 90, 110, 80, 103, 100, 90, 110, 80, 103, &
+    & 100, 90, 110, 80, 103/)
+    values_pred = (/20, 10, 15, 25, 22, 20, 10, 15, 25, 22, 20, 10, 15, 25, 22, 20, 10, 15, 25, 22, &
+    & 20, 10, 15, 25, 22, 20, 10, 15, 25, 22, 20, 10, 15, 25, 22, 20, 10, 15, 25, 22, 20, 10, 15, 25, &
+    &  22, 20, 10, 15, 25, 22, 20, 10, 15, 25, 22, 20, 10, 15, 25, 22, 20, 10, 15, 25, 22, 20, 10, &
+    & 15, 25, 22, 20, 10, 15, 25, 22, 20, 10, 15, 25, 22, 20, 10, 15, 25, 22, 20, 10, 15, 25, 22, &
+    & 20, 10, 15, 25, 22, 20, 10, 15, 25, 22/)
 
 
     !timeloop
@@ -62,13 +67,13 @@ program main
         call euler(values_prey, values_pred, deltaT)
     enddo
 
-    open(unit=12, file='values_prey.txt', status='replace', action='write')
+    open(unit=12, file='values_prey.txt', status='replace', action='write') !Unit ist ein eindeutiger Identifier für die Datei
     write(12, '(E20.6)') values_prey !E steht für Real Numbers(Exponent Notation), 
-    close(unit=12)                   !!die 20 für die Feldbreite und die 6 für die Anzahl der Nachkommastellen (fractional Part)
+    close(12)                        !die 20 für die Feldbreite und die 6 für die Anzahl der Nachkommastellen (fractional Part)
 
     open(unit=13, file='values_pred.txt', status='replace', action='write')
     write(13, '(E20.6)') values_pred
-    close(unit=13)
+    close(13)
     
     deallocate(values_prey)
     deallocate(values_pred)
@@ -83,7 +88,7 @@ program main
                                        !der Informationen in die aufrufende Programmeinheit statt
         real(8), allocatable :: temp_array(:)  !Temp_array benutzen wir, damit die Änderung beider Bestände gleichzeitig in Kraft treten
                                                !und sich nicht gegenseitig beeinflussen
-        allocate(temp_array(steps))
+        allocate(temp_array(partitions))
 
         temp_array = values_prey 
 

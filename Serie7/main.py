@@ -19,13 +19,13 @@ def pred_prey():
 
 
     # Diffusionsmatrix erstellen
-    for j in range(n):
-        for i in range(n):
+    for i in range(n):
+        for j in range(n):
             if((i == j) and (i == 0 or i == n-1)):
                 diffMat[i,j] = -1
             elif (i == j):
                 diffMat[i,j] = -2
-            elif(i == j-1 or i == j+1):
+            elif(i == j - 1 or i == j + 1):
                 diffMat[i,j] = 1
             else:
                 diffMat[i,j] = 0
@@ -38,10 +38,6 @@ def pred_prey():
         y[i] = 1
     
 
-    for j in range(n):
-        x_old[j] = x[j]+100 # X_old und Y_old auf hohe Werte setzen , damit erste Distanz nicht direkt zum Abruch der Loop führt
-        y_old[j] = y[j]+100
-
     distx = float('inf') # Höchste darstellbare Zahl wegen initialem Schleifendurchlauf. Selbes für disty
     disty = float('inf')
     steps = 0
@@ -52,17 +48,16 @@ def pred_prey():
         distx = 0
         disty = 0
 
-        for j in range(values.boxes):
-            distx += (x[i] - x_old[i])**2 # Erster Teil der Euklidischen Distanz , Wurzel wird später in der Bedingung gezogen
-            disty += (y[i] - y_old[i])**2
-
         x_old = x
         y_old = y
-
 
         x = time_discretization.euler(climate_model.x_dt, values.delta_t, x_old, [y_old, diffMat])  # nun ersetze s_prey_temp durch x(tk+1), wenn s vorher x(tk) war
 
         y = time_discretization.euler(climate_model.y_dt, values.delta_t, y_old, [x_old, diffMat])  # nun ersetze s_predator_temp durch y(tk+1), wenn s vorher y(tk) war
+
+        for j in range(values.boxes):
+            distx += (x[i] - x_old[i])**2 # Erster Teil der Euklidischen Distanz , Wurzel wird später in der Bedingung gezogen
+            disty += (y[i] - y_old[i])**2
  
 
     # Beschriftung für die Boxen in einer Liste sammeln
@@ -73,7 +68,7 @@ def pred_prey():
     # Graph plotten
     plt.plot(boxArray, x, 'b', y, 'r') # Prey sind blau, Predator rot
     plt.xlabel('Boxen')
-    plt.ylabel('Bestand in Anzahl Tiere (Preys sind blau und Predator rot)')
+    plt.ylabel('Bestand in Anzahl Tiere (Preys sind blau und Predators sind rot)')
     plt.ticklabel_format(useOffset=False) # Genaueres Anzeigen großes Zahlen
     plt.show()
     print("Wir brauchten " + str(steps) + " Zeitschritte")
