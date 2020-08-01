@@ -1,4 +1,4 @@
-from Serie2_Tutorial import init, finalize
+import init, finalize
 
 # Initial leere Arrays für die zu plottenden Werte
 time = [] # enthält Zeitpunkte, also Floats
@@ -16,27 +16,30 @@ def time_loop(time_integrator, f, deltaT, parameters):
     while i <= init.T:
         time.append(i)
         y.append(time_integrator(f, y[counter - 1], deltaT, parameters)) # y das Ergebnisarray des time-integrators hinzufügen. Also die neuesten berechneten Werte
-        counter = counter + 1 # Laufvariablen inkrementieren
-        i = i + deltaT # i wird nur für Abbruchbedingung benutzt, man könnte auch die Anzahl der Schritte berechnen und diese über counter mitzählen und darüber abbrechen
+        counter += 1 # Laufvariablen inkrementieren
+        i += deltaT # i wird nur für Abbruchbedingung benutzt, man könnte auch die Anzahl der Schritte berechnen und diese über counter mitzählen und darüber abbrechen
 
 if __name__ == '__main__':
     init.initialize() # Model initialisieren. Mit Initial Values und Variablen für das Model, sowie Variablen für das Timestepping
 
-    t = init.time_integrator_name # Die Variablen des gewünschten Models & Timeintegrators auslesen
-    f = init.f_name
 
     # und basierend auf diesen Variablen die passende Module laden
-    if t == "euler_method":
-        from Serie2_Tutorial import euler_method as time_discretization
-    if t == "improved_euler_method":
-        from Serie2_Tutorial import improved_euler_method as time_discretization
-    if f == "energy_balance_model":
-        from Serie2_Tutorial import energy_balance_model as climate_model
-    if f == "predator_prey_model":
-        from Serie2_Tutorial import predator_prey_model as climate_model
+    if init.time_integrator_name == "euler_method":
+        import euler_method as time_discretization
+    elif init.time_integrator_name == "improved_euler_method":
+        import improved_euler_method as time_discretization
+    else:
+        print('Thats not a valid model.')
+
+    if init.f_name == "energy_balance_model":
+        import energy_balance_model as climate_model
+    elif init.f_name == "predator_prey_model":
+        import predator_prey_model as climate_model
+    else:
+        print('Thats not a valid time integrator.')
 
     time_loop(time_discretization.euler, climate_model.dt, init.deltaT, init.parameters) # Aufruf der Timeloop
-    finalize.visualize(f, time, y) # Nach Abschluss der Timeloop Ergebnisse visualisieren
+    finalize.visualize(init.f_name, time, y) # Nach Abschluss der Timeloop Ergebnisse visualisieren
 
 
 
