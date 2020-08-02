@@ -72,13 +72,13 @@ program main
 
     write(*,*) t2-t1 
 
-    open(unit=12, file='values_prey.txt', status='replace', action='write')
+    open(unit = 12, file='values_prey.txt', status='replace', action='write') !12 ist Identifikator
     write(12, '(E20.6)') values_prey !E steht für Real Numbers(Exponent Notation), 
-    close(unit=12)                   !die 20 für die Feldbreite und die 6 für die Anzahl der Nachkommastellen (fractional Part)
+    close(12)                        !die 20 für die Feldbreite und die 6 für die Anzahl der Nachkommastellen (fractional Part)
 
-    open(unit=13, file='values_pred.txt', status='replace', action='write')
+    open(unit = 13, file='values_pred.txt', status='replace', action='write')
     write(13, '(E20.6)') values_pred
-    close(unit=13)
+    close(13)
     
     deallocate(values_prey)
     deallocate(values_pred)

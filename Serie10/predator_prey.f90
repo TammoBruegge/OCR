@@ -5,39 +5,40 @@ program predatorPrey
     integer :: i, steps
     real(8), allocatable :: result_prey(:), result_pred(:), timeArray(:)
 
-
+    !namelist-Gruppen definieren
     namelist /model_parameters/ alpha, beta, gamma, delta, lambda, mu
     namelist /spatial_parameters/ kappa, N 
     namelist /time_parameters/ t0, T, dt
 
+    !namelist-Datei öffnen
     open(unit = 12, file = 'predatorprey.nml', action = 'read')
 
+    !einzelne Gruppen auslesen
     read(unit = 12,nml = model_parameters)
     read(unit = 12,nml = spatial_parameters)
     read(unit = 12,nml = time_parameters)
 
-
     steps = (T - t0) / dt  ! = n
 
-    allocate(result_prey(steps))
-    allocate(result_pred(steps))
-    allocate(timeArray(steps))
+    allocate(result_prey(steps + 1))
+    allocate(result_pred(steps + 1))
+    allocate(timeArray(steps + 1))
 
-    ! Initiale Werte setzen
+    !Initiale Werte setzen
     result_prey(1) = 100
     result_pred(1) = 20
     timeArray(1) = t0
 
-    ! timeloop
-    do i=2, steps + 1
-        timeArray(i) = timeArray(i-1) + dt
+    !timeloop
+    do i = 2, steps + 1
+        timeArray(i) = timeArray(i - 1) + dt
         call euler_at_one_point(result_prey, result_pred, i, dt)
     enddo
 
-    ! Ergebnisse zurückschreiben, wir brauchen hier jedoch nur das outfilePrey
-    open(unit = 21, file = 'outfilePrey.txt', status = 'replace', action='write')
-    write(21, '(E20.6)') result_prey
-    close(21)
+    !Ergebnisse zurückschreiben, wir brauchen hier jedoch nur das outfilePrey
+    open(unit = 21, file = 'outfilePrey.txt', status = 'replace', action='write') ! 21 ist Idenfitifier
+    write(21, '(E20.6)') result_prey!E steht für Real Numbers(Exponent Notation), 
+    close(21)                       !die 20 für die Feldbreite und die 6 für die Anzahl der Nachkommastellen (fractional Part)
 
 
     deallocate(result_prey)
@@ -58,10 +59,10 @@ program predatorPrey
 
             
             result_prey(i) = result_prey(i-1) + deltaT * halfstep_prey * (alpha - beta * halfstep_pred &
-            & - lambda  * halfstep_prey)     
+            & - lambda  * halfstep_prey)  !Eulerstep mit Ableitung an halbem Schritt ausführen
 
             result_pred(i) = result_pred(i-1) + deltaT * halfstep_pred * (delta * halfstep_prey - gamma - &
-            & mu * halfstep_pred)
+            & mu * halfstep_pred)  !Eulerstep mit Ableitung an halbem Schritt ausführen
 
         end subroutine
 
